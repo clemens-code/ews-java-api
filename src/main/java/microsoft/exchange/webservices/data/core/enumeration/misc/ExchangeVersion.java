@@ -32,22 +32,38 @@ public enum ExchangeVersion {
   /**
    * The Exchange2007_ s p1.
    */
-  Exchange2007_SP1,
+  Exchange2007_SP1(1),
   // / Microsoft Exchange 2010
   /**
    * The Exchange2010.
    */
-  Exchange2010,
+  Exchange2010(2),
 
   /// Microsoft Exchange 2010, Service Pack 1
   /**
    * Exchange2010_SP1.
    */
-  Exchange2010_SP1,
+  Exchange2010_SP1(3),
 
   // Microsoft Exchange 2010, Service Pack 2
   /**
    * Exchange2010_SP2.
    */
-  Exchange2010_SP2,
+  Exchange2010_SP2(4),
+
+  /**
+   * Exchange2013
+   */
+  Exchange2013(5),
+
+  /// <summary>
+  /// Microsoft Exchange 2013 SP1
+  /// </summary>
+  Exchange2013_SP1(6);
+
+  public final int servicePack;
+
+  ExchangeVersion(int servicePack) {
+    this.servicePack = servicePack;
+  }
 }

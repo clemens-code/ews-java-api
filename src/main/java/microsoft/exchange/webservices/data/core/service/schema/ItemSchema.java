@@ -30,6 +30,7 @@ import microsoft.exchange.webservices.data.core.enumeration.property.Importance;
 import microsoft.exchange.webservices.data.core.enumeration.property.PropertyDefinitionFlags;
 import microsoft.exchange.webservices.data.core.enumeration.property.Sensitivity;
 import microsoft.exchange.webservices.data.property.complex.ConversationId;
+import microsoft.exchange.webservices.data.property.complex.Flag;
 import microsoft.exchange.webservices.data.property.complex.FolderId;
 import microsoft.exchange.webservices.data.property.complex.ICreateComplexPropertyDelegate;
 import microsoft.exchange.webservices.data.property.complex.InternetMessageHeaderCollection;
@@ -251,6 +252,7 @@ public class ItemSchema extends ServiceObjectSchema {
     String UniqueBody = "item:UniqueBody";
 
     String StoreEntryId = "item:StoreEntryId";
+    String Flag = "item:Flag";
   }
 
 
@@ -676,6 +678,29 @@ public class ItemSchema extends ServiceObjectSchema {
               .of(PropertyDefinitionFlags.CanFind),
           ExchangeVersion.Exchange2010_SP2);
 
+  /*
+  public static readonly PropertyDefinition Flag =
+            new ComplexPropertyDefinition<Flag>(
+                XmlElementNames.Flag,
+                FieldUris.Flag,
+                PropertyDefinitionFlags.CanSet | PropertyDefinitionFlags.CanUpdate | PropertyDefinitionFlags.CanFind,
+                ExchangeVersion.Exchange2013,
+                delegate() { return new Flag(); });
+   */
+  public static final PropertyDefinition Flag =
+      new ComplexPropertyDefinition<microsoft.exchange.webservices.data.property.complex.Flag>(
+          Flag.class,
+          XmlElementNames.Flag,
+          FieldUris.Flag,
+          EnumSet.of(PropertyDefinitionFlags.CanSet, PropertyDefinitionFlags.CanUpdate, PropertyDefinitionFlags.CanFind),
+          ExchangeVersion.Exchange2013,
+          new ICreateComplexPropertyDelegate<microsoft.exchange.webservices.data.property.complex.Flag>() {
+            @Override
+            public microsoft.exchange.webservices.data.property.complex.Flag createComplexProperty() {
+              return new Flag();
+            }
+          }
+      );
 
 
   /**

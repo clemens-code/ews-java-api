@@ -4782,6 +4782,8 @@ public class XmlElementNames {
    */
   public static final String EwsExceptionTypeElementName = "ExceptionType"; // Generated
 
+  public static final String Flag = "Flag";
+
   // by
   // UM
 

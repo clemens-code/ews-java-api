@@ -29,30 +29,33 @@ import microsoft.exchange.webservices.data.core.EwsUtilities;
 import microsoft.exchange.webservices.data.core.ExchangeService;
 import microsoft.exchange.webservices.data.core.PropertySet;
 import microsoft.exchange.webservices.data.core.XmlElementNames;
-import microsoft.exchange.webservices.data.core.service.ServiceObject;
-import microsoft.exchange.webservices.data.core.service.schema.ItemSchema;
-import microsoft.exchange.webservices.data.core.service.schema.ServiceObjectSchema;
-import microsoft.exchange.webservices.data.core.enumeration.service.calendar.AffectedTaskOccurrence;
+import microsoft.exchange.webservices.data.core.enumeration.misc.ExchangeVersion;
+import microsoft.exchange.webservices.data.core.enumeration.property.Importance;
+import microsoft.exchange.webservices.data.core.enumeration.property.Sensitivity;
+import microsoft.exchange.webservices.data.core.enumeration.property.WellKnownFolderName;
 import microsoft.exchange.webservices.data.core.enumeration.service.ConflictResolutionMode;
 import microsoft.exchange.webservices.data.core.enumeration.service.DeleteMode;
 import microsoft.exchange.webservices.data.core.enumeration.service.EffectiveRights;
-import microsoft.exchange.webservices.data.core.enumeration.misc.ExchangeVersion;
-import microsoft.exchange.webservices.data.core.enumeration.property.Importance;
 import microsoft.exchange.webservices.data.core.enumeration.service.MessageDisposition;
 import microsoft.exchange.webservices.data.core.enumeration.service.ResponseActions;
 import microsoft.exchange.webservices.data.core.enumeration.service.SendCancellationsMode;
 import microsoft.exchange.webservices.data.core.enumeration.service.SendInvitationsMode;
 import microsoft.exchange.webservices.data.core.enumeration.service.SendInvitationsOrCancellationsMode;
-import microsoft.exchange.webservices.data.core.enumeration.property.Sensitivity;
+import microsoft.exchange.webservices.data.core.enumeration.service.calendar.AffectedTaskOccurrence;
 import microsoft.exchange.webservices.data.core.enumeration.service.error.ServiceErrorHandling;
-import microsoft.exchange.webservices.data.core.enumeration.property.WellKnownFolderName;
 import microsoft.exchange.webservices.data.core.exception.misc.InvalidOperationException;
 import microsoft.exchange.webservices.data.core.exception.service.local.ServiceLocalException;
+import microsoft.exchange.webservices.data.core.exception.service.local.ServiceVersionException;
 import microsoft.exchange.webservices.data.core.exception.service.remote.ServiceResponseException;
+import microsoft.exchange.webservices.data.core.service.ServiceObject;
+import microsoft.exchange.webservices.data.core.service.schema.ItemSchema;
+import microsoft.exchange.webservices.data.core.service.schema.ServiceObjectSchema;
+import microsoft.exchange.webservices.data.misc.OutParam;
 import microsoft.exchange.webservices.data.property.complex.Attachment;
 import microsoft.exchange.webservices.data.property.complex.AttachmentCollection;
 import microsoft.exchange.webservices.data.property.complex.ConversationId;
 import microsoft.exchange.webservices.data.property.complex.ExtendedPropertyCollection;
+import microsoft.exchange.webservices.data.property.complex.Flag;
 import microsoft.exchange.webservices.data.property.complex.FolderId;
 import microsoft.exchange.webservices.data.property.complex.InternetMessageHeaderCollection;
 import microsoft.exchange.webservices.data.property.complex.ItemAttachment;
@@ -117,7 +120,7 @@ public class Item extends ServiceObject {
    * @throws Exception the exception
    */
   public static Item bind(ExchangeService service, ItemId id,
-      PropertySet propertySet) throws Exception {
+                          PropertySet propertySet) throws Exception {
     return service.bindToItem(Item.class, id, propertySet);
   }
 
@@ -142,7 +145,8 @@ public class Item extends ServiceObject {
    *
    * @return The schema associated with this type of object.
    */
-  @Override public ServiceObjectSchema getSchema() {
+  @Override
+  public ServiceObjectSchema getSchema() {
     return ItemSchema.getInstance();
   }
 
@@ -152,7 +156,8 @@ public class Item extends ServiceObject {
    * @return Earliest Exchange version in which this service object type is
    * supported.
    */
-  @Override public ExchangeVersion getMinimumRequiredServerVersion() {
+  @Override
+  public ExchangeVersion getMinimumRequiredServerVersion() {
 
     return ExchangeVersion.Exchange2007_SP1;
   }
@@ -205,8 +210,8 @@ public class Item extends ServiceObject {
    */
   @Override
   protected void internalDelete(DeleteMode deleteMode,
-      SendCancellationsMode sendCancellationsMode,
-      AffectedTaskOccurrence affectedTaskOccurrences)
+                                SendCancellationsMode sendCancellationsMode,
+                                AffectedTaskOccurrence affectedTaskOccurrences)
       throws ServiceLocalException, Exception {
     this.throwIfThisIsNew();
     this.throwIfThisIsAttachment();
@@ -236,8 +241,8 @@ public class Item extends ServiceObject {
    * @throws Exception the exception
    */
   protected void internalCreate(FolderId parentFolderId,
-      MessageDisposition messageDisposition,
-      SendInvitationsMode sendInvitationsMode) throws Exception {
+                                MessageDisposition messageDisposition,
+                                SendInvitationsMode sendInvitationsMode) throws Exception {
     this.throwIfThisIsNotNew();
     this.throwIfThisIsAttachment();
 
@@ -499,9 +504,20 @@ public class Item extends ServiceObject {
    *
    * @throws Exception the exception
    */
-  @Override public void validate() throws Exception {
+  @Override
+  public void validate() throws Exception {
     super.validate();
     this.getAttachments().validate();
+    //Flag parameter is only valid for Exchange2013 or higher
+    OutParam<Flag> flag = new OutParam<Flag>();
+    if (this.tryGetProperty(Flag.class, ItemSchema.Flag, flag)) {
+      if (this.getService().getRequestedServerVersion().servicePack < ExchangeVersion.Exchange2013.servicePack) {
+        throw new ServiceVersionException(
+            String.format("The parameter %s} is only valid for Exchange Server version %s or a later version.", "Flag",
+                ExchangeVersion.Exchange2013));
+      }
+      flag.getParam().validate();
+    }
   }
 
   /**
@@ -542,13 +558,13 @@ public class Item extends ServiceObject {
       }
     }
 
-		/*
-                 * for (ItemAttachment itemAttachment :
-		 * this.getAttachments().OfType<ItemAttachment>().getc) { if
-		 * ((itemAttachment.Item != null) &&
-		 * itemAttachment.Item.GetIsTimeZoneHeaderRequired(false /* //
-		 * isUpdateOperation )) { return true; } }
-		 */
+    /*
+     * for (ItemAttachment itemAttachment :
+     * this.getAttachments().OfType<ItemAttachment>().getc) { if
+     * ((itemAttachment.Item != null) &&
+     * itemAttachment.Item.GetIsTimeZoneHeaderRequired(false /* //
+     * isUpdateOperation )) { return true; } }
+     */
 
     return super.getIsTimeZoneHeaderRequired(isUpdateOperation);
   }
@@ -1185,6 +1201,14 @@ public class Item extends ServiceObject {
    */
   protected SendInvitationsOrCancellationsMode getDefaultSendInvitationsOrCancellationsMode() {
     return null;
+  }
+
+  public Flag getFlag() throws ServiceLocalException {
+    return getPropertyBag().getObjectFromPropertyDefinition(ItemSchema.Flag);
+  }
+
+  public void setFlag(Flag flag) throws Exception {
+    this.getPropertyBag().setObjectFromPropertyDefinition(ItemSchema.Flag, flag);
   }
 
 }
